@@ -1,15 +1,16 @@
 # ハゲタカのえじき四人対戦の強化学習用環境
 
 import random
+from config import config   
 
-"""random probability setting"""
-rand_prb = 0.8
+
+
 
 
 class HagetakaEnv:
     def __init__(self, player_types=None):
         """
-        player_types: 各プレイヤーのタイプを指定するリスト。例: ['random', 'stable', 'mimic']
+        player_types: 各プレイヤーのタイプを指定するリスト。例: ['random', 'stable', 'sta_rand', 'negavoid']
         """
         self.n_players = 4
         self.n_cards = 15
@@ -19,9 +20,10 @@ class HagetakaEnv:
         self.current_score_index = 0
         self.scores = [0] * self.n_players  # 各プレイヤーのスコア
         if player_types is None:
-            player_types = ['random', 'random', 'random']
+            player_types = config['environment']['player_types']
         self.player_types = player_types
         self.past_actions = [[] for _ in range(self.n_players)]  # 各プレイヤーの過去の行動
+        self.rand_prb = config['environment']['random_probability']
 
     def reset(self):
         """環境のリセット"""
@@ -63,7 +65,7 @@ class HagetakaEnv:
         """Choose stable or random"""
         available_cards = self.player_cards[player_index]
         rand_value = random.random()
-        if rand_value < rand_prb:
+        if rand_value < self.rand_prb:
             score_card = self.score_cards[self.current_score_index]
             if score_card > 0:
                 chosen_card = max(available_cards)

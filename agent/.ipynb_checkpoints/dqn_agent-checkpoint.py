@@ -111,8 +111,6 @@ def train_dqn_agent(agent, env, n_episodes, target_update_freq=10):
 
     print("Training complete.")
 
-    
-"""  
 # 使用例
 state_size = 80  # 状態の次元数
 action_size = 15  # 行動の数（カードの枚数）
@@ -121,4 +119,3 @@ agent = DQNAgent(state_size, action_size)
 
 n_episodes = 1000  # トレーニングするエピソード数
 train_dqn_agent(agent, env, n_episodes)
-"""

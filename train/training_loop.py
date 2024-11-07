@@ -14,11 +14,11 @@ def print_last_10_episodes(last_10_episodes):
             print(f"  Player {i + 1} Cards: {' '.join(f'{card:>2}' for card in cards)}")
 
 # エージェントのトレーニング関数
-def train_agent(agent, env, n_episodes, gamma):
+def train_agent(agent, env, n_episodes, gamma, num_experiments):
     """
     エージェントをトレーニングし、200エピソードごとにプレイヤーごとの平均スコアを計算してグラフ化する関数
     """
-
+    
     player_scores = np.zeros((env.n_players, n_episodes))  # 各プレイヤーのスコアを記録する
     total_rewards = []  # 各エピソードでの累積報酬を保存するリスト
     last_10_episodes = []  # ラスト10エピソードのカード履歴を保存するリスト
@@ -58,6 +58,10 @@ def train_agent(agent, env, n_episodes, gamma):
         # 各プレイヤーの順位スコアを計算
         scores = env.scores
         sorted_indices = np.argsort(scores)[::-1]  # スコア順にソートして順位を取得（降順）
+        
+        # 順位に基づいたスコアをrank_scores_historyに追加
+        for rank, player_index in enumerate(sorted_indices):
+            rank_scores_history[player_index].append(rank_bonuses[rank])
 
         # エージェントの最終ステップの報酬を順位ボーナスで更新
         rank_reward = rank_bonuses[sorted_indices.tolist().index(0)]  # エージェントの順位に対応するボーナス
@@ -90,7 +94,7 @@ def train_agent(agent, env, n_episodes, gamma):
     plot_average_scores(player_scores, n_episodes)
     
     # 200エピソードごとの順位スコアの平均をグラフで表示
-    plot_rank_scores(rank_scores_history, n_episodes, HagetakaEnv)
+    plot_rank_scores(rank_scores_history, n_episodes, env)
 
     return total_rewards
 
@@ -111,6 +115,10 @@ def plot_average_scores(player_scores, n_episodes):
     plt.grid(True)
     plt.show()
     
+    plt.savefig("average_score.png")
+    print("Graph saved as 'average_score.png'")
+    
+    
 # 追加: 各プレイヤーの順位スコアの推移をグラフで表示する関数
 def plot_rank_scores(rank_scores_history, n_episodes, env):
     num_points = n_episodes // 200  # 200エピソードごとにプロットするポイント数
@@ -129,6 +137,12 @@ def plot_rank_scores(rank_scores_history, n_episodes, env):
     plt.legend()
     plt.grid(True)
     plt.show()
+    
+    print("rank_scores_history shape:", len(rank_scores_history), len(rank_scores_history[0]) if rank_scores_history else 0)
+
+    
+    plt.savefig("average_rank.png")
+    print("Graph saved as 'average_rank.png'")  
 
 """
     

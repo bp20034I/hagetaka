@@ -1,7 +1,9 @@
 #REINFORCEエージェント
 
 import torch
+import torch.nn as nn
 import torch.optim as optim
+
 
 class PolicyNetwork(torch.nn.Module):
     def __init__(self, state_size, action_size):
@@ -15,16 +17,36 @@ class PolicyNetwork(torch.nn.Module):
         return x
 
 class REINFORCEAgent:
-    def __init__(self, state_size, action_size, learning_rate=0.01):
+    def __init__(self, state_size, action_size, learning_rate):
         self.policy_network = PolicyNetwork(state_size, action_size)
-        self.optimizer = optim.Adam(self.policy_network.parameters(), lr=learning_rate)
+        
+        self.state_size = state_size
         self.action_size = action_size
         self.gamma = 0.99  # 割引率
+        
+        self.model = self.build_model()
+        self.optimizer = optim.Adam(self.policy_network.parameters(), lr=learning_rate)
 
         self.states = []
         self.actions = []
         self.rewards = []
         self.available_actions = list(range(action_size))  # 使用可能なカードリスト
+        
+    def build_model(self):
+        """ニューラルネットワークの構築"""
+        return nn.Sequential(
+            nn.Linear(self.state_size, 128),
+            nn.ReLU(),
+            nn.Linear(128, self.action_size),
+            nn.Softmax(dim=-1)  # 各行動の確率を出力
+        )
+    
+    def select_action(self, state):
+        """行動の選択"""
+        state = torch.FloatTensor(state)
+        probabilities = self.model(state)
+        action = torch.multinomial(probabilities, 1).item()
+        return action, probabilities[action]  # 行動とその確率を返す
 
     def reset(self):
         """エピソードの開始時に使用可能なカードをリセット"""
@@ -38,33 +60,6 @@ class REINFORCEAgent:
         # 使用可能なカードだけに対応する確率を抽出
         valid_probs = action_probs[self.available_actions]
 
-        """
-
-        # 確率が0にならないように正規化
-        if valid_probs.sum().item() == 0 or torch.isnan(valid_probs).any():
-            valid_probs = torch.ones_like(valid_probs) / len(valid_probs)
-        else:
-            epsilon = 1e-9
-            valid_probs = valid_probs / (valid_probs.sum() + epsilon)
-
-        action_dist = torch.distributions.Categorical(valid_probs)
-        action_idx = action_dist.sample()
-
-
-
-        # 確率が0にならないように正規化 + detachを削除
-        # if valid_probs.sum().item() == 0 or torch.isnan(valid_probs).any():
-        #    valid_probs = torch.ones_like(valid_probs) / len(valid_probs)
-        # else:
-        epsilon = 1e-9  # Add small epsilon for numerical stability
-        valid_probs = valid_probs / (valid_probs.sum() + epsilon)
-
-        action_dist = torch.distributions.Categorical(valid_probs)
-        action_idx = action_dist.sample()
-
-        """
-
-   
         valid_probs = valid_probs / valid_probs.sum() 
         valid_probs[torch.isnan(valid_probs)] = 1 / len(valid_probs)  
 
@@ -111,3 +106,14 @@ class REINFORCEAgent:
         self.states = []
         self.actions = []
         self.rewards = []
+        
+    def save(self, file_path):
+        """モデルの重みを指定したファイルに保存する"""
+        torch.save(self.model.state_dict(), file_path)
+        print(f"Model saved to {file_path}")
+        
+    def load(self, file_path):
+        """指定したファイルからモデルの重みを読み込む"""
+        self.model.load_state_dict(torch.load(file_path))
+        self.model.eval()  # 評価モードに設定
+        print(f"Model loaded from {file_path}")
