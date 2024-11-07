@@ -101,7 +101,7 @@ def train_agent(agent, env, n_episodes, gamma, num_experiments):
             last_10_episodes.append((score_card_history, player_card_history))
             
         # ラスト10エピソードの結果を表示
-        # print_last_10_episodes(last_10_episodes)
+        print_last_10_episodes(last_10_episodes)
 
         # 最後に各プレイヤーの平均スコアをグラフで出力
         # plot_average_scores(player_scores, n_episodes)
@@ -211,7 +211,7 @@ def plot_mean_ranks(cumulative_ranks, n_episodes):
         
     plt.title('Average rank of REINFORCE Agent Over Experiments')
     plt.xlabel('Episode')
-    plt.ylabel('Average Reward')
+    plt.ylabel('Average Rank')
     plt.legend()
     plt.grid(True)
     plt.show()

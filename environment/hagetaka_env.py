@@ -85,6 +85,25 @@ class HagetakaEnv:
             chosen_card = random.choice(available_cards)
         return chosen_card
     
+    def middle_score_player_action(self, player_index):
+        """中間値戦略：4〜7の数字が出た時、持っている一番大きいカードを出す"""
+        available_cards = self.player_cards[player_index]
+        score_card = self.score_cards[self.current_score_index]
+        if score_card > 3 and score_card < 8:
+            chosen_card = max(available_cards)
+        else:
+            chosen_card = random.choice(available_cards)
+        return chosen_card
+    
+    def middle_negative_player_action(self, player_index):
+        """中間戦略とマイナス回避戦略の混合"""
+        available_cards = self.player_cards[player_index]
+        score_card = self.score_cards[self.current_score_index]
+        if (score_card > 3 and score_card < 8) or (score_card < 0):
+            chosen_card = max(available_cards)
+        else:
+            chosen_card = random.choice(available_cards)
+        return chosen_card
     def step(self, action):
         """ゲームの1ステップを実行"""
         actions = [action]  # エージェントの行動
@@ -101,6 +120,10 @@ class HagetakaEnv:
                     chosen_action = self.stable_or_random_player_action(i)
                 elif self.player_types[i - 1] == 'negavoid':
                     chosen_action = self.negative_avoidance_player_action(i)
+                elif self.player_types[i - 1] == 'middle':
+                    chosen_action = self.middle_score_player_action(i)
+                elif self.player_types[i - 1] == 'middle_negative':
+                    chosen_action = self.middle_negative_player_action(i)
                 actions.append(chosen_action)
             else:
                 actions.append(-1)  # カードが残っていない場合は-1

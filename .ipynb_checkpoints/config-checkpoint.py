@@ -1,12 +1,14 @@
 # config.py
 
+#playertype :random, stable, sta_rand, negavoid, middle, middle_negative
+
 config = {
     "environment": {
         "name": "CustomEnv",
         "max_episode_length": 200,
         "render": False,
-        'player_types': ["sta_rand", "sta_rand", "sta_rand"],
-        'random_probability': 0.8,
+        'player_types': ["random", "stable", "sta_rand"],
+        'random_probability': 0.7,
     },
     'agent': {
         'learning_rate': 0.001,
