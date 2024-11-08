@@ -76,31 +76,33 @@ class HagetakaEnv:
         return chosen_card
 
     def negative_avoidance_player_action(self, player_index):
-        """マイナス回避戦略：マイナスカードが出たら持っている一番大きいカードを出す"""
+        """マイナス回避戦略：マイナスカードが出たら持っている中間の数字のカードを出す"""
         available_cards = self.player_cards[player_index]
         score_card = self.score_cards[self.current_score_index]
         if score_card < 0:
-            chosen_card = max(available_cards)
+            chosen_card = available_cards[len(available_cards) // 2]
         else:
             chosen_card = random.choice(available_cards)
         return chosen_card
     
-    def middle_score_player_action(self, player_index):
-        """中間値戦略：4〜7の数字が出た時、持っている一番大きいカードを出す"""
+    def middle_avoidance_player_action(self, player_index):
+        """中間値回避戦略：1〜5の数字が出た時、持っている一番小さいカードを出す"""
         available_cards = self.player_cards[player_index]
         score_card = self.score_cards[self.current_score_index]
-        if score_card > 3 and score_card < 8:
-            chosen_card = max(available_cards)
+        if score_card > 0 and score_card < 6:
+            chosen_card = min(available_cards)
         else:
             chosen_card = random.choice(available_cards)
         return chosen_card
     
     def middle_negative_player_action(self, player_index):
-        """中間戦略とマイナス回避戦略の混合"""
+        """中間回避戦略とマイナス回避戦略の混合"""
         available_cards = self.player_cards[player_index]
         score_card = self.score_cards[self.current_score_index]
-        if (score_card > 3 and score_card < 8) or (score_card < 0):
-            chosen_card = max(available_cards)
+        if score_card > 0 and score_card < 6:
+            chosen_card = min(available_cards)
+        elif score_card < 0:
+            chosen_card = available_cards[len(available_cards) // 2]
         else:
             chosen_card = random.choice(available_cards)
         return chosen_card
@@ -121,7 +123,7 @@ class HagetakaEnv:
                 elif self.player_types[i - 1] == 'negavoid':
                     chosen_action = self.negative_avoidance_player_action(i)
                 elif self.player_types[i - 1] == 'middle':
-                    chosen_action = self.middle_score_player_action(i)
+                    chosen_action = self.middle_avoidance_player_action(i)
                 elif self.player_types[i - 1] == 'middle_negative':
                     chosen_action = self.middle_negative_player_action(i)
                 actions.append(chosen_action)

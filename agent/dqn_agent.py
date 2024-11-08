@@ -22,7 +22,7 @@ class QNetwork(nn.Module):
 
 # DQNエージェント
 class DQNAgent:
-    def __init__(self, state_size, action_size, learning_rate=0.001, gamma=0.99, epsilon=1.0, epsilon_decay=0.995, epsilon_min=0.01, memory_size=2000, batch_size=64):
+    def __init__(self, state_size, action_size, learning_rate, gamma, epsilon, epsilon_decay, epsilon_min, memory_size, batch_size):
         self.state_size = state_size
         self.action_size = action_size
         self.gamma = gamma
