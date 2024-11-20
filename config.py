@@ -12,7 +12,7 @@ config = {
     },
     'agent': {
         'learning_rate': 0.003,
-        'gamma': 0.50,
+        'gamma': 0.99,
         "epsilon": 1.0,
         "epsilon_min": 0.01,
         "epsilon_decay": 0.995,
@@ -23,9 +23,9 @@ config = {
         "memory_size": 10000,
     },
     'training': {
-        'n_episodes': 200,
+        'n_episodes': 30000,
         "evaluation_frequency": 50,
-        'num_experiments': 100,
+        'num_experiments': 1,
     },
     "saving": {
         "model_save_path": "saved_models/dqn_agent_model.pth",

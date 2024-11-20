@@ -15,7 +15,7 @@ def print_last_10_episodes(last_10_episodes):
             print(f"  Player {i + 1} Cards: {' '.join(f'{card:>2}' for card in cards)}")
 
 # エージェントのトレーニング関数
-def train_agent(agent, env, n_episodes, gamma, num_experiments):
+def train_reinforce_agent(agent, env, n_episodes, gamma, num_experiments):
     """
     エージェントをトレーニングし、200エピソードごとにプレイヤーごとの平均スコアを計算してグラフ化する関数
     """
@@ -218,3 +218,4 @@ def plot_mean_ranks(cumulative_ranks, n_episodes):
     
     plt.savefig("average_ranks_over_num_experiments.png")
     print("Graph saved as 'average_ranks_over_experiments.png'")
+    

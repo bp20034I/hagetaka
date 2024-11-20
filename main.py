@@ -11,7 +11,8 @@ from agent.dqn_agent import DQNAgent
 from environment.hagetaka_env import HagetakaEnv  
 
 # トレーニングループのインポート
-from train.training_loop_v2 import train_agent  
+from train.train_reinforce_agent import train_reinforce_agent
+from train.train_dqn_agent import train_dqn_agent
 
 # モジュールのインポート
 import argparse
@@ -41,7 +42,8 @@ def get_agent(agent_type):
             epsilon_decay=config['agent']['epsilon_decay'], 
             epsilon_min=config['agent']['epsilon_min'], 
             memory_size=config['agent']['memory_size'], 
-            batch_size=config['agent']['batch_size']
+            batch_size=config['agent']['batch_size'],
+            target_update_frequency=config['agent']['target_update_frequency']
         ), "dqn_agent_model.pth"
     else:
         raise ValueError(f"Unsupported agent type: {agent_type}")
@@ -66,16 +68,6 @@ def main():
     #エージェント名を指定する
     agent, model_filename = get_agent(agent_type)
     model_path = os.path.join("saved_models", model_filename)
-    
-    """
-    model_path = "saved_models/reinforce_agent_model.pth" # エージェントごとの学習状況を保存するパス
-    try:
-        agent.load(model_path)
-        print(f"Loaded model from {model_path}")
-    except FileNotFoundError:
-        print(f"No model found at {model_path}. Please train the model first.")
-        return
-    """
 
     # モデルのロード
     try:
@@ -88,7 +80,10 @@ def main():
     
     # トレーニング開始
     print("Starting training...")
-    train_agent(agent, environment, config['training']['n_episodes'], config['agent']['gamma'], config['training']['num_experiments'])  
+    if agent_type == "REINFORCE":
+        train_reinforce_agent(agent, environment, config['training']['n_episodes'], config['agent']['gamma'],config['training']['num_experiments'])  
+    elif agent_type == "DQN":
+        train_dqn_agent(agent, environment, config['training']['n_episodes'], config['agent']['gamma'], config['training']['num_experiments'], config['agent']['target_update_frequency'])
     
     end_time = time.time()
     

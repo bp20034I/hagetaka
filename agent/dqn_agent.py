@@ -1,10 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
 import random
 from collections import deque
-from environment.hagetaka_env import HagetakaEnv
 
 # Q-ネットワークを定義
 class QNetwork(nn.Module):
@@ -17,12 +15,12 @@ class QNetwork(nn.Module):
     def forward(self, x):
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
-        x = self.fc3(x)  # 出力はQ値（softmaxは不要）
+        x = self.fc3(x)  # 出力はQ値
         return x
 
-# DQNエージェント
+
 class DQNAgent:
-    def __init__(self, state_size, action_size, learning_rate, gamma, epsilon, epsilon_decay, epsilon_min, memory_size, batch_size):
+    def __init__(self, state_size, action_size, learning_rate, gamma, epsilon, epsilon_decay, epsilon_min, memory_size, batch_size, target_update_frequency):
         self.state_size = state_size
         self.action_size = action_size
         self.gamma = gamma
@@ -30,7 +28,10 @@ class DQNAgent:
         self.epsilon_decay = epsilon_decay
         self.epsilon_min = epsilon_min
         self.batch_size = batch_size
+        self.target_update_frequency = target_update_frequency
         self.memory = deque(maxlen=memory_size)
+        
+        self.available_actions = list(range(self.action_size))
 
         self.policy_network = QNetwork(state_size, action_size)
         self.target_network = QNetwork(state_size, action_size)
@@ -39,25 +40,43 @@ class DQNAgent:
         # ターゲットネットワークの初期化
         self.update_target_network()
 
+    def reset(self):
+        #エピソードの開始時に使用可能なカードをリセット
+        self.available_actions = list(range(self.action_size))        
+
     def update_target_network(self):
-        """ターゲットネットワークの更新"""
+        #ターゲットネットワークの更新"""
         self.target_network.load_state_dict(self.policy_network.state_dict())
 
     def memorize(self, state, action, reward, next_state, done):
-        """経験リプレイ用メモリに保存"""
+        #経験リプレイ用メモリに保存"""
         self.memory.append((state, action, reward, next_state, done))
 
-    def select_action(self, state):
-        """ε-greedy法で行動を選択"""
+    def get_action(self, state):
+        
+        if not self.available_actions:
+            raise ValueError("No Available actions left for the agent.")
+        
+        #ε-greedy法で行動を選択"""
         if random.random() < self.epsilon:
-            return random.randint(0, self.action_size - 1)
-        state = torch.FloatTensor(state).unsqueeze(0)
-        with torch.no_grad():
-            q_values = self.policy_network(state)
-        return q_values.argmax().item()
+            # 使用可能なカードからランダムに選択
+            action = random.choice(self.available_actions)
+        else:
+            # Qネットワークで行動を選択
+            state_tensor = torch.FloatTensor(state).unsqueeze(0)
+            with torch.no_grad():
+                q_values = self.policy_network(state_tensor).numpy().flatten()
+
+            # 使用可能なカードの中で最大のQ値を持つ行動を選択
+            available_q_values = [(i, q_values[i]) for i in self.available_actions]
+            action = max(available_q_values, key=lambda x: x[1])[0]
+
+        # 選択したカードを使用済みにする
+        self.available_actions.remove(action)
+        return action + 1
 
     def replay(self):
-        """経験リプレイで学習"""
+        #経験リプレイで学習"""
         if len(self.memory) < self.batch_size:
             return
 
@@ -71,7 +90,7 @@ class DQNAgent:
         dones = torch.FloatTensor(dones)
 
         # Q値の更新
-        q_values = self.policy_network(states).gather(1, actions).squeeze()
+        q_values = self.policy_network(states).gather(1, actions - 1).squeeze()
         with torch.no_grad():
             next_q_values = self.target_network(next_states).max(1)[0]
         target_q_values = rewards + (self.gamma * next_q_values * (1 - dones))
@@ -86,39 +105,21 @@ class DQNAgent:
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
-# DQNエージェントのトレーニング関数
-def train_dqn_agent(agent, env, n_episodes, target_update_freq=10):
-    for episode in range(n_episodes):
-        state = env.reset()
-        total_reward = 0
-        done = False
+    def save(self, filepath):
+        #モデルの保存"""
+        torch.save({
+            'policy_network': self.policy_network.state_dict(),
+            'target_network': self.target_network.state_dict(),
+            'optimizer': self.optimizer.state_dict(),
+            'epsilon': self.epsilon,
+        }, filepath)
 
-        while not done:
-            action = agent.select_action(state)  # 行動を選択
-            next_state, reward, done, _ = env.step(action)  # 環境で1ステップ実行
-            agent.memorize(state, action, reward, next_state, done)  # 経験をメモリに保存
-            agent.replay()  # 経験リプレイで学習
-            state = next_state
-            total_reward += reward
-
-        # 進捗を表示
-        if (episode + 1) % 100 == 0:
-            print(f'Episode {episode + 1}/{n_episodes}, Total Reward: {total_reward}')
-
-        # ターゲットネットワークの更新
-        if (episode + 1) % target_update_freq == 0:
-            agent.update_target_network()
-
-    print("Training complete.")
-
-    
-"""  
-# 使用例
-state_size = 80  # 状態の次元数
-action_size = 15  # 行動の数（カードの枚数）
-env = HagetakaEnv(player_types=['random', 'negavoid', 'sta_rand'])
-agent = DQNAgent(state_size, action_size)
-
-n_episodes = 1000  # トレーニングするエピソード数
-train_dqn_agent(agent, env, n_episodes)
-"""
+    def load(self, filepath):
+        #モデルの読み込み"""
+        checkpoint = torch.load(filepath)
+        self.policy_network.load_state_dict(checkpoint['policy_network'])
+        self.target_network.load_state_dict(checkpoint['target_network'])
+        self.optimizer.load_state_dict(checkpoint['optimizer'])
+        self.epsilon = checkpoint['epsilon']
+        self.policy_network.eval()
+        self.target_network.eval()
