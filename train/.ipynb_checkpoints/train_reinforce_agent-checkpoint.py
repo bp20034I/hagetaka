@@ -78,8 +78,8 @@ def train_reinforce_agent(agent, env, n_episodes, gamma, num_experiments):
             c_ranks += 1
             
             # エージェントの最終ステップの報酬を順位ボーナスで更新
-            rank_reward = rank_bonuses[sorted_indices.tolist().index(0)]  # エージェントの順位に対応するボーナス
-            agent.rewards[-1] = rank_reward  # エージェントの最終ステップに順位ボーナスを反映        
+            #rank_reward = rank_bonuses[sorted_indices.tolist().index(0)]  # エージェントの順位に対応するボーナス
+            #agent.rewards[-1] = rank_reward  # エージェントの最終ステップに順位ボーナスを反映        
 
             agent.update_policy()  # エピソード終了後に方策を更新
             total_rewards.append(total_reward)
@@ -107,7 +107,7 @@ def train_reinforce_agent(agent, env, n_episodes, gamma, num_experiments):
         # plot_average_scores(player_scores, n_episodes)
 
         # 200エピソードごとの順位スコアの平均をグラフで表示
-        # plot_rank_scores(rank_scores_history, n_episodes, env)
+        plot_rank_scores(rank_scores_history, n_episodes, env)
         
     # 実験回数で平均をとる
     cumulative_rewards = cumulative_rewards / num_experiments
@@ -171,15 +171,13 @@ def plot_rank_scores(rank_scores_history, n_episodes, env):
     
 env = HagetakaEnv(player_types=['random', 'negavoid', 'sta_rand'])  # 環境の初期化
 """
-state_size = 80  # 状態の次元数を取得
-action_size = 15  # 行動の数（カードの枚数）
+
 """
 agent = REINFORCEAgent(state_size, action_size)  # エージェントの初期化
 
 n_episodes = 100000  # トレーニングするエピソード数
 
 """
-gamma = 0.50 # 割引率
 
 """
 # トレーニングを実行
@@ -218,3 +216,4 @@ def plot_mean_ranks(cumulative_ranks, n_episodes):
     
     plt.savefig("average_ranks_over_num_experiments.png")
     print("Graph saved as 'average_ranks_over_experiments.png'")
+    

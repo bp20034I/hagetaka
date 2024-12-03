@@ -17,14 +17,14 @@ class PolicyNetwork(torch.nn.Module):
         x = torch.relu(self.fc2(x))
         x = torch.softmax(self.fc3(x), dim=-1)  # Use softmax to ensure probabilities sum to 1
         return x
-
+    
 class REINFORCEAgent:
     def __init__(self, state_size, action_size, learning_rate):
         self.policy_network = PolicyNetwork(state_size, action_size)
         
         self.state_size = state_size
         self.action_size = action_size
-        self.gamma = 0.99  # 割引率
+        self.gamma = 1  # 割引率
         
         self.model = self.build_model()
         self.optimizer = optim.Adam(self.policy_network.parameters(), lr=learning_rate)

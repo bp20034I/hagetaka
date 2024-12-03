@@ -8,7 +8,7 @@ from config import config
 
 
 class HagetakaEnv:
-    def __init__(self, player_types=None):
+    def __init__(self, player_types=config["environment"]["player_types"]):
         """
         player_types: 各プレイヤーのタイプを指定するリスト。例: ['random', 'stable', 'sta_rand', 'negavoid']
         """
